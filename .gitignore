@@ -1,0 +1,24 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# 本地凭据：绝不能进仓库
+tools/zotero_local_key.json
+_auth.json
+
+# Umi-OCR 便携版（体积大，用 tools/umi_setup.py --download 现下）
+tools/_umi/
+
+# 示例的「产物」不入库（生成命令写在 README，随用随生成）
+tools/references/*_带书签.pdf
+tools/references/*.layered.pdf
+tools/references/[[]OCR[]]_*.pdf
+
+# 运行时产物
+*.layered.pdf
+*.meta.json
+*_pages/
+dist/
+build/
+.probe/

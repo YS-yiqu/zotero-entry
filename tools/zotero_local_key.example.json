@@ -1,0 +1,5 @@
+{
+  "serverId": "从任意 GET 的响应头 Zotero-Server-ID 取",
+  "apiKey": "POST /api/local/authorize 授权后返回的 key",
+  "note": "复制本文件为 zotero_local_key.json 并填入自己的值；该文件含写入凭据，不要提交、不要外发"
+}
