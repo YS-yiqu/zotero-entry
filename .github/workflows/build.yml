@@ -74,8 +74,17 @@ jobs:
           cd dist && zip -qr "zotero-entry-${TAG}.zip" zotero-entry
           cd .. && ls -l dist
 
-      - name: 发布到 Release
+      - name: 发布到 Release（已存在则覆盖附件，保证同一标签可重跑）
         if: startsWith(github.ref, 'refs/tags/')
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release create "${GITHUB_REF_NAME}" "dist/zotero-entry-${GITHUB_REF_NAME}.zip" --title "${GITHUB_REF_NAME}" --notes "自动构建：技能包 zip（解出 SKILL.md 与 tools/，把 zotero-entry 整个目录放进你的技能目录即可）。"
+        run: |
+          set -e
+          TAG="${GITHUB_REF_NAME}"
+          ZIP="dist/zotero-entry-${TAG}.zip"
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release upload "$TAG" "$ZIP" --clobber
+          else
+            gh release create "$TAG" "$ZIP" --title "$TAG" \
+              --notes "自动构建：技能包 zip（解出 SKILL.md 与 tools/，把 zotero-entry 整个目录放进你的技能目录即可）。"
+          fi
