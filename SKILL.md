@@ -1,6 +1,11 @@
 ---
 name: zotero-entry
 description: 把标准/规程/报告/投稿/校准证书**条目化**（用户也说"**Zotero 化**""导入 Zotero""建条目""来活儿了"）时使用：PDF 类型判定 → 双层化（Umi-OCR）→ 加书签 → 抽元数据 → 生成 RDF → **导入 Zotero（本地 API 直写，条目+附件）**；也用于查询本机 Zotero 库（检索条目、列分类与标签、取条目详情与 PDF 全文、看最近入库）。查询与写库走 Zotero 本地 API http://127.0.0.1:23119/api/，用 curl.exe 调用，Zotero 需正在运行且已勾选「允许其他应用程序与 Zotero 通讯」。
+slug: zotero-entry
+displayName: Zotero 条目化
+version: 1.0.0
+summary: 把标准、规程、报告、投稿、校准证书这类 PDF 条目化：判类型 → Umi-OCR 双层化 → 加书签 → 抽元数据 → 直写 Zotero 本地库（条目 + 可标注附件）。
+license: MIT
 ---
 
 # Zotero 条目化与本地库查询
