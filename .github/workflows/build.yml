@@ -1,0 +1,81 @@
+name: build-and-release
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write        # 不加这行，发 Release 会 403
+
+env:
+  PYTHONIOENCODING: utf-8
+  PYTHONUTF8: "1"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: 安装依赖
+        run: python -m pip install --quiet pymupdf requests PyYAML
+
+      - name: 自检 —— 语法编译（全部脚本）
+        run: python -m compileall -q tools
+
+      - name: 自检 —— SKILL.md 结构（frontmatter 的 name 必须与目录名一致）
+        run: |
+          python - <<'PY'
+          import pathlib, sys
+          import yaml
+          p = pathlib.Path("SKILL.md")
+          text = p.read_text(encoding="utf-8")
+          if not text.startswith("---"):
+              sys.exit("SKILL.md 缺少 frontmatter")
+          fm = yaml.safe_load(text.split("---", 2)[1])
+          name = fm.get("name", "")
+          assert name and name.islower() and "-" in name, f"name 不是 kebab-case: {name!r}"
+          assert fm.get("description"), "缺少 description"
+          assert "tools/" in text, "正文没有引用 tools/"
+          print(f"OK  name={name}  description={len(fm['description'])} 字")
+          PY
+
+      - name: 自检 —— 脚本能跑（现造一份最小 PDF，判类型必须返回结果）
+        run: |
+          python - <<'PY'
+          import subprocess, fitz
+          doc = fitz.open()
+          pg = doc.new_page()
+          pg.insert_text((72, 100), "1 Scope", fontsize=12)
+          pg.insert_text((72, 130), "Foreword", fontsize=12)
+          doc.save("smoke.pdf")
+          doc.close()
+          out = subprocess.run(["python", "tools/pdf_probe.py", "smoke.pdf"],
+                               capture_output=True, text=True, encoding="utf-8")
+          print(out.stdout or out.stderr)
+          assert out.returncode == 0, "pdf_probe 退出码非 0"
+          assert "判定" in out.stdout, "pdf_probe 没有输出判定结果"
+          print("OK  pdf_probe 正常")
+          PY
+
+      - name: 打包技能 zip（SKILL.md 与 tools/ 同级）
+        run: |
+          set -e
+          TAG="${GITHUB_REF_NAME:-dev}"
+          mkdir -p dist/zotero-entry
+          cp SKILL.md README.md dist/zotero-entry/
+          cp -r tools dist/zotero-entry/
+          rm -rf dist/zotero-entry/tools/_umi dist/zotero-entry/tools/__pycache__
+          cd dist && zip -qr "zotero-entry-${TAG}.zip" zotero-entry
+          cd .. && ls -l dist
+
+      - name: 发布到 Release
+        if: startsWith(github.ref, 'refs/tags/')
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "${GITHUB_REF_NAME}" "dist/zotero-entry-${GITHUB_REF_NAME}.zip" --title "${GITHUB_REF_NAME}" --notes "自动构建：技能包 zip（解出 SKILL.md 与 tools/，把 zotero-entry 整个目录放进你的技能目录即可）。"

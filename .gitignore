@@ -22,3 +22,6 @@ tools/references/[[]OCR[]]_*.pdf
 dist/
 build/
 .probe/
+
+dist/
+smoke.pdf
